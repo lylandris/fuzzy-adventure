@@ -62,7 +62,7 @@ MY_CFLAGS =
 MY_LIBS   =
 
 # The pre-processor options used by the cpp (man cpp for more).
-CPPFLAGS  = -Wall -std=c++11
+CPPFLAGS  = -Wall -std=c++11 -pthread
 
 # The options used in linking as well as in any direct use of ld.
 LDFLAGS   =
@@ -87,8 +87,8 @@ HDREXTS = .h .H .hh .hpp .HPP .h++ .hxx .hp
 
 # The pre-processor and compiler options.
 # Users can override those variables from the command line.
-CFLAGS  = -g -O2
-CXXFLAGS= -g -O2
+CFLAGS  = -ggdb
+CXXFLAGS= -ggdb
 
 # The C program compiler.
 #CC     = gcc
