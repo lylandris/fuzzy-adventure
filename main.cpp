@@ -156,11 +156,12 @@ class PacketProcess
 
 int main(int argc, char** argv)
 {
-  const uint32_t total = 20;
+  const uint32_t totalPackets = 20;
+  const uint64_t totalTickStep = 1000;
   std::vector<std::unique_ptr<std::thread>> packets;
 
   std::cout << "Start to send packets ..." << std::endl;
-  for (uint32_t id = 0; id < total; id++)
+  for (uint32_t id = 0; id < totalPackets; id++)
   {
     std::unique_ptr<PacketProcess> pkt(new PacketProcess(id));
     std::unique_ptr<std::thread> p(new std::thread(PacketProcess::PktProc, std::move(pkt), std::ref(fifo), std::ref(trigger)));
@@ -183,7 +184,7 @@ int main(int argc, char** argv)
     }
 
     globalTick++;
-    if (globalTick > 10000) break;
+    if (globalTick > totalTickStep) return 0;
     if (0 == globalTick % 100)
     {
       std::cerr << '.';
