@@ -1,5 +1,5 @@
-#ifndef __Task_hpp
-#define __Task_hpp
+#ifndef __Task_h
+#define __Task_h
 
 #include <cstdint>
 
@@ -23,4 +23,4 @@ namespace ctc
   };
 }
 
-#endif //__Task_hpp
+#endif //__Task_h

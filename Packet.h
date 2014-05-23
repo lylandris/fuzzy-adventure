@@ -1,5 +1,5 @@
-#ifndef __Packet_hpp
-#define __Packet_hpp
+#ifndef __Packet_h
+#define __Packet_h
 
 #include <cstdint>
 #include <memory>
@@ -22,4 +22,4 @@ namespace ctc
   };
 }
 
-#endif //__Packet_hpp
+#endif //__Packet_h

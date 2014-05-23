@@ -1,5 +1,5 @@
-#ifndef __Object_hpp
-#define __Object_hpp
+#ifndef __Object_h
+#define __Object_h
 
 namespace ctc
 {
@@ -11,4 +11,4 @@ namespace ctc
   };
 }
 
-#endif //__Object_hpp
+#endif //__Object_h
