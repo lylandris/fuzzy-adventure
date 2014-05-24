@@ -26,23 +26,35 @@ class PacketProcess
   private:
     int32_t _packetId;
     uint64_t _tick;
-#if 0
-    static void CheckProcAndWait(PacketProcess& pkt, SafeQueue<int> &fifo, SafeQueue<uint64_t> trigger, uint64_t delay)
+
+    static void CheckProcAndWait(PacketProcess& pkt, SafeQueue<int> &fifo, SafeQueue<uint64_t> &trigger, uint64_t delay)
     {
-      while (pkt._tick + delay < trigger.DeQueue())
+      int32_t pktId = pkt.GetPacketId();
+      uint64_t theNextTick = pkt.GetTick() + delay;
+      while (true)
       {
-        fifo.EnQueue(pkt._packetId);
+        uint64_t globalTick = trigger.DeQueue();
+        if (globalTick < theNextTick)
+        {
+          //std::cout << "[Step 1] Packet_" << pktId << " is waiting @ " << globalTick << "..." << std::endl;
+          fifo.EnQueue(pktId);
+        }
+        else
+        {
+          pkt.MoveNextTick(delay);
+          fifo.EnQueue(pktId);
+          break;
+        }
       }
 
-      pkt._tick += delay;
+      std::cout << "[Step 1] Packet_" << pktId << " is processing @ " << theNextTick << "..." << std::endl;
     }
-#endif
 
   public:
     PacketProcess(int32_t id)
     {
       _packetId = id;
-      _tick = 10 + _packetId;
+      _tick = 10;
     }
 
     virtual ~PacketProcess(void)
@@ -67,96 +79,23 @@ class PacketProcess
     static void PktProc(std::unique_ptr<PacketProcess> pkt, SafeQueue<int> &fifo, SafeQueue<uint64_t> &trigger)
     {
       uint64_t delay = 20;
-      int32_t pktId = pkt->GetPacketId();
 
-      {
-        uint64_t theNextTick = pkt->GetTick() + delay;
-        while (true)
-        {
-          uint64_t globalTick = trigger.DeQueue();
-          if (globalTick < theNextTick)
-          {
-            //std::cout << "[Step 1] Packet_" << pktId << " is waiting @ " << globalTick << "..." << std::endl;
-            fifo.EnQueue(pktId);
-          }
-          else
-          {
-            pkt->MoveNextTick(delay);
-            fifo.EnQueue(pktId);
-            break;
-          }
-        }
-
-        std::cout << "[Step 1] Packet_" << pktId << " is processing @ " << theNextTick << "..." << std::endl;
-      }
-
-      {
-        uint64_t theNextTick = pkt->GetTick() + delay;
-        while (true)
-        {
-          uint64_t globalTick = trigger.DeQueue();
-          if (globalTick < theNextTick)
-          {
-            //std::cout << "[Step 2] Packet_" << pktId << " is waiting @ " << globalTick << "..." << std::endl;
-            fifo.EnQueue(pktId);
-          }
-          else
-          {
-            pkt->MoveNextTick(delay);
-            fifo.EnQueue(pktId);
-            break;
-          }
-        }
-
-        std::cout << "[Step 2] Packet_" << pktId << " is processing @ " << theNextTick << "..." << std::endl;
-      }
-
-      {
-        uint64_t theNextTick = pkt->GetTick() + delay;
-        while (true)
-        {
-          uint64_t globalTick = trigger.DeQueue();
-          if (globalTick < theNextTick)
-          {
-            //std::cout << "[Step 3] Packet_" << pktId << " is waiting @ " << globalTick << "..." << std::endl;
-            fifo.EnQueue(pktId);
-          }
-          else
-          {
-            pkt->MoveNextTick(delay);
-            fifo.EnQueue(pktId);
-            break;
-          }
-        }
-
-        std::cout << "[Step 3] Packet_" << pktId << " is processing @ " << theNextTick << "..." << std::endl;
-      }
+      CheckProcAndWait(*pkt, fifo, trigger, delay);
+      CheckProcAndWait(*pkt, fifo, trigger, delay);
+      CheckProcAndWait(*pkt, fifo, trigger, delay);
+      CheckProcAndWait(*pkt, fifo, trigger, delay);
 
       while (true)
       {
         trigger.DeQueue();
-        fifo.EnQueue(pktId);
+        fifo.EnQueue(pkt->GetPacketId());
       }
-
-#if 0
-      CheckProcAndWait(*pkt, fifo, trigger, delay);
-      std::cout << "Packet " << pkt->GetPacketId() << " is processing ... <STEP 1>" << std::endl;
-
-      CheckProcAndWait(*pkt, fifo, trigger, delay);
-      std::cout << "Packet " << pkt->GetPacketId() << " is processing ... <STEP 2>" << std::endl;
-
-      CheckProcAndWait(*pkt, fifo, trigger, delay);
-      std::cout << "Packet " << pkt->GetPacketId() << " is processing ... <STEP 3>" << std::endl;
-
-      CheckProcAndWait(*pkt, fifo, trigger, delay);
-      std::cout << "Packet " << pkt->GetPacketId() << " is processing ... <STEP 4>" << std::endl;
-#endif
     }
 };
 
 int main(int argc, char** argv)
 {
-  const uint32_t totalPackets = 20;
+  const uint32_t totalPackets = 5;
   const uint64_t totalTickStep = 1000;
   std::vector<std::unique_ptr<std::thread>> packets;
 
