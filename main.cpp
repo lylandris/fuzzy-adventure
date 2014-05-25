@@ -5,122 +5,51 @@
 #include <vector>
 #include <memory>
 
-#include "SafeQueue.h"
+#include "PacketProcess.h"
 
 using namespace ctc;
 
-static const size_t FIFO_DEPTH = 1;
-static SafeQueue<int> fifo(FIFO_DEPTH);
+std::vector<std::unique_ptr<PacketProcess>> packetList;
+std::vector<std::thread> eventList;
+std::vector<std::unique_ptr<std::atomic<bool>>> doneList;
 
-static const size_t TRIGGER_FIFO_DEPTH = 100;
-static SafeQueue<uint64_t> trigger(TRIGGER_FIFO_DEPTH);
-
-struct RunningFlag
+void PacketGenerator()
 {
-  bool waiting;
-  bool done;
-};
+  std::cout << "Start to send packets ..." << std::endl;
+  const uint64_t MAX_PACKET_ID = 4;
+  const int32_t THE_PACKET_LEN_LIST_SIZE = 4;
+  const size_t THE_PACKET_LEN[THE_PACKET_LEN_LIST_SIZE] = {64, 1518, 256, 9600};
+  for (uint64_t id = 0; id < MAX_PACKET_ID; id++)
+  {
+    size_t pktLen = THE_PACKET_LEN[id % THE_PACKET_LEN_LIST_SIZE];
+    std::unique_ptr<PacketProcess> pkt(new PacketProcess(id, pktLen));
+    packetList.push_back(std::move(pkt));
 
-class PacketProcess
-{
-  private:
-    int32_t _packetId;
-    uint64_t _tick;
-
-    static void CheckProcAndWait(PacketProcess& pkt, SafeQueue<int> &fifo, SafeQueue<uint64_t> &trigger, uint64_t delay)
-    {
-      int32_t pktId = pkt.GetPacketId();
-      uint64_t theNextTick = pkt.GetTick() + delay;
-      while (true)
-      {
-        uint64_t globalTick = trigger.DeQueue();
-        if (globalTick < theNextTick)
-        {
-          //std::cout << "[Step 1] Packet_" << pktId << " is waiting @ " << globalTick << "..." << std::endl;
-          fifo.EnQueue(pktId);
-        }
-        else
-        {
-          pkt.MoveNextTick(delay);
-          fifo.EnQueue(pktId);
-          break;
-        }
-      }
-
-      std::cout << "[Step 1] Packet_" << pktId << " is processing @ " << theNextTick << "..." << std::endl;
-    }
-
-  public:
-    PacketProcess(int32_t id)
-    {
-      _packetId = id;
-      _tick = 10;
-    }
-
-    virtual ~PacketProcess(void)
-    {
-    }
-
-    int32_t GetPacketId(void) const
-    {
-      return _packetId;
-    }
-
-    uint64_t GetTick(void) const
-    {
-      return _tick;
-    }
-
-    void MoveNextTick(uint64_t delay)
-    {
-      _tick += delay;
-    }
-
-    static void PktProc(std::unique_ptr<PacketProcess> pkt, SafeQueue<int> &fifo, SafeQueue<uint64_t> &trigger)
-    {
-      uint64_t delay = 20;
-
-      CheckProcAndWait(*pkt, fifo, trigger, delay);
-      CheckProcAndWait(*pkt, fifo, trigger, delay);
-      CheckProcAndWait(*pkt, fifo, trigger, delay);
-      CheckProcAndWait(*pkt, fifo, trigger, delay);
-
-      while (true)
-      {
-        trigger.DeQueue();
-        fifo.EnQueue(pkt->GetPacketId());
-      }
-    }
-};
+    //for (size_t i = 0; i < pktLen * 100; i++);
+  }
+}
 
 int main(int argc, char** argv)
 {
-  const uint32_t totalPackets = 5;
   const uint64_t totalTickStep = 1000;
-  std::vector<std::unique_ptr<std::thread>> packets;
-
-  std::cout << "Start to send packets ..." << std::endl;
-  for (uint32_t id = 0; id < totalPackets; id++)
-  {
-    std::unique_ptr<PacketProcess> pkt(new PacketProcess(id));
-    std::unique_ptr<std::thread> p(new std::thread(PacketProcess::PktProc, std::move(pkt), std::ref(fifo), std::ref(trigger)));
-    packets.push_back(std::move(p));
-  }
 
   uint64_t globalTick = 0;
   while (true)
   {
-    for (auto& x: packets)
+    for (auto& x: packetList)
     {
-      x->get_id();
-      trigger.EnQueue(globalTick);
+      std::unique_ptr<std::atomic<bool>> flag(new std::atomic<bool>(false));
+      eventList.push_back(std::thread(Process::Notify, std::ref(*x), std::ref(*flag)));
+      doneList.push_back(std::move(flag));
     }
 
-    for (auto& x: packets)
+    for (auto& e: eventList)
     {
-      x->get_id();
-      fifo.DeQueue();
+      e.join();
     }
+
+    eventList.clear();
+    doneList.clear();
 
     globalTick++;
     if (globalTick > totalTickStep) return 0;
@@ -130,10 +59,7 @@ int main(int argc, char** argv)
     }
   }
 
-  for (auto& p:packets)
-  {
-    p->join();
-  }
+  packetList.clear();
 
   std::cout << "It works!" << std::endl;
 
