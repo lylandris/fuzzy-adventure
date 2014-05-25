@@ -14,6 +14,7 @@ PacketProcess::PacketProcess(size_t len, uint64_t id) :
 
 PacketProcess::~PacketProcess(void)
 {
+  _task->join();
 }
 
 void PacketProcess::PerformProcessing(PacketProcess& theProc)
@@ -21,13 +22,16 @@ void PacketProcess::PerformProcessing(PacketProcess& theProc)
   std::cout << "Starting to perform processing for packets... <id_" <<
     theProc.GetPacketId() << "@" << theProc.GetTick() << ">..." << std::endl;
 
+  for (int32_t i = 0; i < 2000000; i++);
   Process::WaitFor(theProc, 120);
   std::cout << "Starting to perform processing for packets... <id_" <<
     theProc.GetPacketId() << "@" << theProc.GetTick() << ">..." << std::endl;
 
+  for (int32_t i = 0; i < 2000000; i++);
   Process::WaitFor(theProc, 12);
   std::cout << "Starting to perform processing for packets... <id_" <<
     theProc.GetPacketId() << "@" << theProc.GetTick() << ">..." << std::endl;
 
+  for (int32_t i = 0; i < 2000000; i++);
   theProc.SetTaskDone(true);
 }

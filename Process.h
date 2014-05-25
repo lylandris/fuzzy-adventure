@@ -18,7 +18,6 @@ namespace ctc
       virtual ~Process(void) = 0;
 
     private:
-      std::atomic<bool> _isToggle;
       std::atomic<bool> _isWaiting;
       std::atomic<bool> _isFinished;
       std::atomic<bool> _isTaskDone;

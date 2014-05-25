@@ -16,7 +16,7 @@ std::vector<std::unique_ptr<std::atomic<bool>>> doneList;
 static void PacketGenerator(void)
 {
   std::cout << "Start to send packets ..." << std::endl;
-  const uint64_t MAX_PACKET_ID = 100;
+  const uint64_t MAX_PACKET_ID = 4;
   const int32_t THE_PACKET_LEN_LIST_SIZE = 4;
   const size_t THE_PACKET_LEN[THE_PACKET_LEN_LIST_SIZE] = {64, 1518, 256, 9600};
   for (uint64_t id = 0; id < MAX_PACKET_ID; id++)
@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     }
   }
 
-  std::cout << "Almost finished ..." << std::endl;
+  std::cout << std::endl << "Almost finished ..." << std::endl;
 
   packetList.clear();
 
