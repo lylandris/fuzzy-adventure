@@ -2,10 +2,9 @@
 
 using namespace ctc;
 
-Packet::Packet(size_t len, uint64_t id)
+Packet::Packet(uint64_t id, size_t len) :
+  _pktId(id), _pktLen(len)
 {
-  _pktLen = len;
-  _pktId = id;
   _pkt = std::unique_ptr<uint8_t []>(new uint8_t[len]);
 }
 
@@ -21,12 +20,12 @@ void Packet::SetPacketByte(size_t pos, uint8_t byte)
   }
 }
 
-size_t Packet::GetPacketLen(void)
+size_t Packet::GetPacketLen(void) const
 {
   return _pktLen;
 }
 
-uint64_t Packet::GetPacketId(void)
+uint64_t Packet::GetPacketId(void) const
 {
   return _pktId;
 }

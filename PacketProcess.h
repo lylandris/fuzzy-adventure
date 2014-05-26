@@ -9,7 +9,7 @@ namespace ctc
   class PacketProcess : virtual public Packet, virtual public Process
   {
     public:
-      PacketProcess(size_t len, uint64_t id);
+      PacketProcess(uint64_t id, size_t len);
       virtual ~PacketProcess(void);
     private:
       static void PerformProcessing(PacketProcess& theProc);

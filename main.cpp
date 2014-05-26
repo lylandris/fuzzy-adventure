@@ -9,39 +9,38 @@
 
 using namespace ctc;
 
-std::vector<std::unique_ptr<PacketProcess>> packetList;
-std::vector<std::thread> eventList;
-std::vector<std::unique_ptr<std::atomic<bool>>> doneList;
-
-static void PacketGenerator(void)
+static void PacketGenerator(std::vector<std::unique_ptr<PacketProcess>> &packets)
 {
+  const uint64_t MAX_PACKET_ID = 100;
+  const size_t pktSizeList[] = {64, 1518, 256, 9600};
+
   std::cout << "Start to send packets ..." << std::endl;
-  const uint64_t MAX_PACKET_ID = 4;
-  const int32_t THE_PACKET_LEN_LIST_SIZE = 4;
-  const size_t THE_PACKET_LEN[THE_PACKET_LEN_LIST_SIZE] = {64, 1518, 256, 9600};
   for (uint64_t id = 0; id < MAX_PACKET_ID; id++)
   {
-    size_t pktLen = THE_PACKET_LEN[id % THE_PACKET_LEN_LIST_SIZE];
+    size_t pktLen = pktSizeList[id % 4];
     std::unique_ptr<PacketProcess> pkt(new PacketProcess(id, pktLen));
-    packetList.push_back(std::move(pkt));
-
-    //for (size_t i = 0; i < pktLen * 100; i++);
+    packets.push_back(std::move(pkt));
   }
 }
 
 int main(int argc, char** argv)
 {
-  PacketGenerator();
-  const uint64_t totalTickStep = 1000;
+  std::unique_ptr<std::vector<std::unique_ptr<PacketProcess>>> active(new std::vector<std::unique_ptr<PacketProcess>>);
+  std::unique_ptr<std::vector<std::unique_ptr<PacketProcess>>> backup(new std::vector<std::unique_ptr<PacketProcess>>);
+  std::vector<std::thread> eventList;
+
+  PacketGenerator(*active);
 
   uint64_t globalTick = 0;
   while (true)
   {
-    for (auto& x: packetList)
+    if (0 == globalTick % 10) std::cerr << '.';
+    if (active->empty() && backup->empty()) break;
+
+    for (auto& x: (*active))
     {
       std::unique_ptr<std::atomic<bool>> flag(new std::atomic<bool>(false));
-      eventList.push_back(std::thread(Process::Notify, std::ref(*x), std::ref(*flag)));
-      doneList.push_back(std::move(flag));
+      eventList.push_back(std::thread(Process::Notify, std::ref(*x), globalTick));
     }
 
     for (auto& e: eventList)
@@ -50,19 +49,19 @@ int main(int argc, char** argv)
     }
 
     eventList.clear();
-    doneList.clear();
 
-    globalTick++;
-    if (globalTick > totalTickStep) return 0;
-    if (0 == globalTick % 100)
+    for (auto& x: (*active))
     {
-      std::cerr << '.';
+      if (!x->IsFinished())
+      {
+        backup->push_back(std::move(x));
+      }
     }
+
+    active->clear();
+    std::swap(active, backup);
+    globalTick++;
   }
-
-  std::cout << std::endl << "Almost finished ..." << std::endl;
-
-  packetList.clear();
 
   std::cout << "It works!" << std::endl;
 

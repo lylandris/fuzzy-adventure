@@ -14,27 +14,25 @@ namespace ctc
   class Process : virtual public Object
   {
     public:
-      Process(void);
+      Process(uint64_t startTick);
       virtual ~Process(void) = 0;
 
     private:
-      std::atomic<bool> _isWaiting;
+      std::atomic<bool> _isRunning;
       std::atomic<bool> _isFinished;
-      std::atomic<bool> _isTaskDone;
 
       uint64_t _triggerTick;
-      uint64_t _currentTick;
 
     protected:
       std::unique_ptr<std::thread> _task;
 
     public:
-      static void Notify(Process& theProc, std::atomic<bool>& done);
+      static void Notify(Process& theProc, uint64_t nowTick);
       static void WaitFor(Process& theProc, uint64_t latency);
+      static void SetFinished(Process& theProc);
 
     public:
-      uint64_t GetTick(void);
-      void SetTaskDone(bool done);
+      bool IsFinished(void);
   };
 }
 

@@ -11,16 +11,16 @@ namespace ctc
   class Packet : virtual public Object
   {
     public:
-      Packet(size_t len, uint64_t id);
+      Packet(uint64_t id, size_t len);
       virtual ~Packet() = 0;
       void SetPacketByte(size_t pos, uint8_t byte);
-      size_t GetPacketLen(void);
-      uint64_t GetPacketId(void);
+      size_t GetPacketLen(void) const;
+      uint64_t GetPacketId(void) const;
 
     private:
+      const uint64_t _pktId;
+      const size_t _pktLen;
       std::unique_ptr<uint8_t []> _pkt;
-      size_t _pktLen;
-      uint64_t _pktId;
   };
 }
 
