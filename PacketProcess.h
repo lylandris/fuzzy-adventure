@@ -1,6 +1,8 @@
 #ifndef __PacketProcess_h
 #define __PacketProcess_h
 
+#include <mutex>
+
 #include "Packet.h"
 #include "Process.h"
 
@@ -12,7 +14,9 @@ namespace ctc
       PacketProcess(uint64_t id, size_t len);
       virtual ~PacketProcess(void);
     private:
+      static void PrintStatus(PacketProcess& theProc);
       static void PerformProcessing(PacketProcess& theProc);
+      static std::mutex _m;
   };
 }
 

@@ -34,13 +34,14 @@ int main(int argc, char** argv)
   uint64_t globalTick = 0;
   while (true)
   {
-    if (0 == globalTick % 10) std::cerr << '.';
     if (active->empty() && backup->empty()) break;
 
     for (auto& x: (*active))
     {
-      std::unique_ptr<std::atomic<bool>> flag(new std::atomic<bool>(false));
-      eventList.push_back(std::thread(Process::Notify, std::ref(*x), globalTick));
+      if (x->DesireRun(globalTick))
+      {
+        eventList.push_back(std::thread(Process::Notify, std::ref(*x), globalTick));
+      }
     }
 
     for (auto& e: eventList)
@@ -49,7 +50,11 @@ int main(int argc, char** argv)
     }
 
     eventList.clear();
+    globalTick++;
 
+    if (0 != globalTick % 50) continue;
+
+    //std::cerr << '.';
     for (auto& x: (*active))
     {
       if (!x->IsFinished())
@@ -60,7 +65,6 @@ int main(int argc, char** argv)
 
     active->clear();
     std::swap(active, backup);
-    globalTick++;
   }
 
   std::cout << "It works!" << std::endl;

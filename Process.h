@@ -33,6 +33,8 @@ namespace ctc
 
     public:
       bool IsFinished(void);
+      bool DesireRun(uint64_t nowTick);
+      uint64_t GetTriggerTick(void);
   };
 }
 

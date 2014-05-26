@@ -1,7 +1,5 @@
 #include "Process.h"
 
-#include <iostream>
-
 using namespace ctc;
 
 Process::Process(uint64_t startTick)
@@ -19,9 +17,6 @@ void Process::Notify(Process& theProc, uint64_t nowTick)
 {
   if (theProc._isFinished) return;
   if (theProc._isRunning) std::this_thread::yield();
-  if (nowTick < theProc._triggerTick)  return;
-
-  std::cout << "[" << std::this_thread::get_id() << "] Trigged @" << nowTick << std::endl;
 
   theProc._isRunning = true;
   while (theProc._isRunning) std::this_thread::yield();
@@ -31,16 +26,12 @@ void Process::WaitFor(Process& theProc, uint64_t latency)
 {
   theProc._triggerTick += latency;
 
-  std::cout << "[" << std::this_thread::get_id() << "] Paused #" << theProc._triggerTick << std::endl;
-
   theProc._isRunning = false;
   while (!theProc._isRunning) std::this_thread::yield();
 }
 
 void Process::SetFinished(Process& theProc)
 {
-  std::cout << "[" << std::this_thread::get_id() << "] Finished ..." << std::endl;
-
   theProc._isRunning = false;
   theProc._isFinished = true;
 }
@@ -48,4 +39,14 @@ void Process::SetFinished(Process& theProc)
 bool Process::IsFinished(void)
 {
   return _isFinished;
+}
+
+bool Process::DesireRun(uint64_t nowTick)
+{
+  return (nowTick >= _triggerTick);
+}
+
+uint64_t Process::GetTriggerTick(void)
+{
+  return _triggerTick;
 }
