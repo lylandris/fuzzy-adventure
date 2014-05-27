@@ -6,8 +6,8 @@ using namespace ctc;
 
 std::mutex PacketProcess::_m;
 
-PacketProcess::PacketProcess(uint64_t id, size_t len) :
-  Packet::Packet(id, len), Process::Process(id)
+PacketProcess::PacketProcess(uint64_t id, size_t len, uint64_t startTick) :
+  Packet::Packet(id, len), Process::Process(startTick)
 {
   auto x = std::bind(PacketProcess::PerformProcessing, std::ref(*this));
   std::unique_ptr<std::thread> p(new std::thread(x));
@@ -28,24 +28,11 @@ void PacketProcess::PrintStatus(PacketProcess& theProc)
 void PacketProcess::PerformProcessing(PacketProcess& theProc)
 {
   Process::WaitFor(theProc, 0);
-
-  PacketProcess::PrintStatus(theProc);
-  Process::WaitFor(theProc, 8);
-
-  PacketProcess::PrintStatus(theProc);
-  Process::WaitFor(theProc, 12);
-
-  PacketProcess::PrintStatus(theProc);
-  Process::WaitFor(theProc, 22);
-
-  PacketProcess::PrintStatus(theProc);
-  Process::WaitFor(theProc, 33);
-
-  PacketProcess::PrintStatus(theProc);
-  Process::WaitFor(theProc, 42);
-
-  PacketProcess::PrintStatus(theProc);
-  Process::WaitFor(theProc, 62);
+  for (int32_t i = 0; i < 9; i++)
+  {
+    //for (int i = 0; i < 1000000; i++);
+    Process::WaitFor(theProc, 1);
+  }
 
   PacketProcess::PrintStatus(theProc);
   Process::SetFinished(theProc);

@@ -11,7 +11,7 @@ namespace ctc
   class PacketProcess : virtual public Packet, virtual public Process
   {
     public:
-      PacketProcess(uint64_t id, size_t len);
+      PacketProcess(uint64_t id, size_t len, uint64_t startTick);
       virtual ~PacketProcess(void);
     private:
       static void PrintStatus(PacketProcess& theProc);
